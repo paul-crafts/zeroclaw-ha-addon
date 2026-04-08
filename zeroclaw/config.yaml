@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "ZeroClaw AI Assistant for Home Assistant"
-version: "0.1.4"
+version: "0.1.5"
 slug: "zeroclaw"
 init: false
 arch:
