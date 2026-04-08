@@ -7,7 +7,7 @@ ENV ZEROCLAW_VERSION="v0.6.8"
 
 # Install necessary runtime dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tar bash jq && \
+    apt-get install -y --no-install-recommends curl ca-certificates tar bash jq && \
     rm -rf /var/lib/apt/lists/*
 
 # Download the appropriate ZeroClaw binary based on the architecture
