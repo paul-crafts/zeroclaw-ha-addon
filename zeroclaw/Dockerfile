@@ -6,7 +6,7 @@ ARG BUILD_ARCH=aarch64
 ENV ZEROCLAW_VERSION="v0.6.8"
 
 # Install necessary runtime dependencies
-RUN apk add --no-cache curl tar bash jq
+RUN apk add --no-cache curl tar bash jq gcompat
 
 # Download the appropriate ZeroClaw binary based on the architecture
 RUN echo "Building for architecture: ${BUILD_ARCH}" && \
