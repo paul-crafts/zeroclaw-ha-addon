@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
+ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base-debian:latest
 FROM $BUILD_FROM
 
 # Build arguments provided by Home Assistant Supervisor
@@ -6,7 +6,9 @@ ARG BUILD_ARCH=aarch64
 ENV ZEROCLAW_VERSION="v0.6.8"
 
 # Install necessary runtime dependencies
-RUN apk add --no-cache curl tar bash jq gcompat
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl tar bash jq && \
+    rm -rf /var/lib/apt/lists/*
 
 # Download the appropriate ZeroClaw binary based on the architecture
 RUN echo "Building for architecture: ${BUILD_ARCH}" && \
