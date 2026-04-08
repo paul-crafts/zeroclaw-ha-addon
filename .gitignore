@@ -1,0 +1,4 @@
+# Home Assistant Add-on files
+*.md
+!README.md
+.DS_Store

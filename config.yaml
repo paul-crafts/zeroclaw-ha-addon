@@ -1,0 +1,23 @@
+name: "ZeroClaw"
+description: "ZeroClaw AI Assistant for Home Assistant"
+version: "0.1.0"
+slug: "zeroclaw"
+init: false
+arch:
+  - aarch64
+  - amd64
+  - armv7
+map:
+  - config:rw
+options:
+  provider: "ollama"
+  model: "llama3"
+  gateway_port: 8080
+schema:
+  provider: str
+  model: str
+  gateway_port: int
+ports:
+  8080/tcp: 8080
+  42617/tcp: 42617
+webui: http://[HOST]:[PORT:42617]
