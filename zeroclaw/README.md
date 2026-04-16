@@ -9,9 +9,9 @@ ZeroClaw requires some initial configuration (like setting up your LLM providers
 1. Install the **Advanced SSH & Web Terminal** add-on in Home Assistant if you haven't already.
 2. Open your terminal and run the following command to launch the ZeroClaw onboarding wizard:
    ```bash
-   docker exec -it addon_$(cat /data/options.json | grep -o '"slug": "[^"]*"' | cut -d'"' -f4 || echo "zeroclaw") zc-onboard
+   docker exec -it $(docker ps --format '{{.Names}}' | grep zeroclaw | head -n 1) zc-onboard
    ```
-   *(Note: Target the `addon_..._zeroclaw` container name. Use `docker ps` to verify.)*
+   *(This command automatically finds the correct container name for you!)*
 3. Follow the interactive prompts to configure your agent.
 4. **Crucial:** Once you finish the wizard, go to **Settings > Add-ons > ZeroClaw** and click **Restart** so the web UI can load your fresh configuration!
 

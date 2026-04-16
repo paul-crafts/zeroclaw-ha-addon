@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "LLM-powered AI Assistant for Home Assistant. Run 'zc-onboard' in terminal to begin."
-version: "0.2.0"
+version: "0.2.1"
 slug: "zeroclaw"
 init: false
 arch:
