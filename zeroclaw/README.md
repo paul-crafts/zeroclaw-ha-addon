@@ -15,7 +15,7 @@ ZeroClaw requires some initial configuration (like setting up your LLM providers
 3. Follow the interactive prompts to configure your agent.
 4. **Crucial:** Once you finish the wizard, go to **Settings > Add-ons > ZeroClaw** and click **Restart** so the web UI can load your fresh configuration!
 
-**Advanced Users:** Your configuration is safely stored at `/config/zeroclaw/config.toml` (by default). You can edit this manually at any time using the Home Assistant File Editor or VS Code add-ons!
+**Advanced Users:** Your configuration is safely stored at `/addon_configs/zeroclaw/config.toml` (by default). You can edit this manually at any time using the Home Assistant File Editor or VS Code add-ons!
 
 ---
 

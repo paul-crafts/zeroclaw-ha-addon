@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "LLM-powered AI Assistant for Home Assistant. Run 'zc-onboard' in terminal to begin."
-version: "0.2.1"
+version: "0.2.2"
 slug: "zeroclaw"
 init: false
 arch:
@@ -8,10 +8,10 @@ arch:
   - amd64
   - armv7
 map:
-  - config:rw
+  - addon_config:rw
   - share:rw
 options:
-  config_dir: "/config/zeroclaw"
+  config_dir: "/config"
 schema:
   config_dir: "str"
 ports:

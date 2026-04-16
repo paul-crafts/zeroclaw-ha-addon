@@ -3,7 +3,7 @@
 if bashio::config.has_value 'config_dir'; then
     CONFIG_DIR=$(bashio::config 'config_dir')
 else
-    CONFIG_DIR="/config/zeroclaw"
+    CONFIG_DIR="/config"
 fi
 CONFIG_FILE="${CONFIG_DIR}/config.toml"
 DATA_DIR="/data"
