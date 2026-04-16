@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "ZeroClaw AI Assistant for Home Assistant"
-version: "0.1.5"
+version: "0.1.6"
 slug: "zeroclaw"
 init: false
 arch:
@@ -9,6 +9,7 @@ arch:
   - armv7
 map:
   - config:rw
+  - share:rw
 options: {}
 schema: {}
 ports:
