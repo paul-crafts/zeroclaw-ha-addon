@@ -25,6 +25,11 @@ RUN echo "Building for architecture: ${BUILD_ARCH}" && \
     curl -sL "$URL" | tar -xz -C /usr/local/bin && \
     chmod +x /usr/local/bin/zeroclaw
 
+# Create a wrapper script for onboarding
+RUN echo '#!/bin/sh' > /usr/local/bin/zc-onboard && \
+    echo '/usr/local/bin/zeroclaw --config-dir /config/zeroclaw onboard "$@"' >> /usr/local/bin/zc-onboard && \
+    chmod +x /usr/local/bin/zc-onboard
+
 # Copy initialization script
 COPY run.sh /
 RUN chmod a+x /run.sh

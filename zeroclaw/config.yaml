@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "ZeroClaw AI Assistant for Home Assistant"
-version: "0.1.7"
+version: "0.1.8"
 slug: "zeroclaw"
 init: false
 arch:
@@ -10,8 +10,10 @@ arch:
 map:
   - config:rw
   - share:rw
-options: {}
-schema: {}
+options:
+  config_dir: "/config/zeroclaw"
+schema:
+  config_dir: "str"
 ports:
   8080/tcp: 8080
   42617/tcp: 42617
