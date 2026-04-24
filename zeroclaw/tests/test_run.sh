@@ -34,8 +34,7 @@ shopt -s expand_aliases
 echo "Running tests for run.sh..."
 
 # Test 1: Check if run.sh can be parsed
-bash -n ../run.sh
-if [ $? -eq 0 ]; then
+if bash -n ../run.sh; then
     echo "✅ run.sh syntax is valid"
 else
     echo "❌ run.sh syntax error"
