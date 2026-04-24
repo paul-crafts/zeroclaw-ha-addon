@@ -1,8 +1,7 @@
 #!/usr/bin/with-contenv bashio
-set -e
+set -ex
 
 # ── 1. Configuration ──
-# We read from /data/options.json directly to avoid Supervisor API token issues
 OPTIONS_FILE="/data/options.json"
 CONFIG_DIR=$(jq -r '.config_dir // "/config"' "$OPTIONS_FILE")
 INGRESS_PORT=8099
@@ -19,22 +18,11 @@ mkdir -p /run/nginx
 # Setup .bashrc for the terminal
 if [ ! -f /root/.bashrc ]; then
     cat > /root/.bashrc << 'EOF'
-# Zeroclaw environment
 export PS1='\[\033[01;32m\]zeroclaw\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 alias ls='ls --color=auto'
 alias ll='ls -alF'
 alias zc='zeroclaw'
-# Add /usr/local/bin to path if not present
 [[ ":$PATH:" != *":/usr/local/bin:"* ]] && export PATH="/usr/local/bin:$PATH"
-EOF
-fi
-
-# Setup .tmux.conf
-if [ ! -f /root/.tmux.conf ]; then
-    cat > /root/.tmux.conf << 'EOF'
-set -g mouse on
-set -g status-bg black
-set -g status-fg white
 EOF
 fi
 
@@ -51,8 +39,14 @@ zeroclaw --config-dir "$CONFIG_DIR" daemon --host 127.0.0.1 --port $ZEROCLAW_POR
 ZEROCLAW_PID=$!
 
 # Start ttyd (Web Terminal)
+# We use --base-path to match the Nginx location
 echo "[INFO] Starting Web Terminal (ttyd)..."
-ttyd -p $TTYD_PORT -i 127.0.0.1 -W tmux new -A -s zeroclaw /bin/bash &
+ttyd \
+    --port $TTYD_PORT \
+    --interface 127.0.0.1 \
+    --base-path /terminal \
+    --writable \
+    /bin/bash &
 TTYD_PID=$!
 
 # Start Nginx
@@ -72,8 +66,6 @@ function shutdown() {
 
 trap shutdown SIGTERM SIGINT
 
-echo "[INFO] ZeroClaw is up and running!"
-
 # ── 6. Supervisor Loop ──
 while true; do
     if ! kill -0 "$ZEROCLAW_PID" 2>/dev/null; then
@@ -83,7 +75,7 @@ while true; do
     fi
     if ! kill -0 "$TTYD_PID" 2>/dev/null; then
         echo "[WARN] ttyd died, restarting..."
-        ttyd -p $TTYD_PORT -i 127.0.0.1 -W tmux new -A -s zeroclaw /bin/bash &
+        ttyd --port $TTYD_PORT --interface 127.0.0.1 --base-path /terminal --writable /bin/bash &
         TTYD_PID=$!
     fi
     if ! kill -0 "$NGINX_PID" 2>/dev/null; then
