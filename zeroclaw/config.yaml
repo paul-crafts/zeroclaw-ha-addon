@@ -3,7 +3,7 @@ description: "LLM-powered AI Assistant for Home Assistant. Now with built-in Web
 version: "0.3.0"
 slug: "zeroclaw"
 hassio_api: true
-hassio_role: manager
+hassio_role: admin
 ingress: true
 panel_icon: mdi:robot-industrial
 panel_title: ZeroClaw
