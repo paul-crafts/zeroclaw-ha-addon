@@ -34,7 +34,7 @@ http {
 
         location = /terminal { return 302 /terminal/; }
         location /terminal/ {
-            proxy_pass http://ttyd_terminal/;
+            proxy_pass http://ttyd_terminal;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
