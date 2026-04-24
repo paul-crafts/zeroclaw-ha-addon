@@ -20,7 +20,7 @@ http {
     }
 
     upstream ttyd_terminal {
-        server 127.0.0.1:8099;
+        server 127.0.0.1:8100;
     }
 
     server {
