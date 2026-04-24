@@ -129,12 +129,12 @@
         <p>Your LLM-powered AI Assistant for Home Assistant. Experience a new level of home automation intelligence.</p>
         
         <div class="grid">
-            <a href="zeroclaw/" class="card">
+            <a href="zeroclaw/" class="card" id="link-dashboard">
                 <span class="icon">🚀</span>
                 <span class="card-title">Dashboard</span>
                 <span class="card-desc">Open the ZeroClaw Web Interface</span>
             </a>
-            <a href="terminal/" class="card">
+            <a href="terminal/" class="card" id="link-terminal">
                 <span class="icon">🐚</span>
                 <span class="card-title">Terminal</span>
                 <span class="card-desc">Run onboarding and system commands</span>
@@ -145,5 +145,17 @@
             ZeroClaw Add-on &bull; Powered by Large Language Models
         </div>
     </div>
+
+    <script>
+        // Fix links to be absolute relative to the current ingress path to prevent nesting
+        // e.g. clicking "Terminal" multiple times shouldn't result in /terminal/terminal/
+        const rootPath = window.location.pathname.replace(/\/$/, "").replace(/\/index\.html$/, "");
+        document.querySelectorAll('.card').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !href.startsWith('http') && !href.startsWith('/')) {
+                link.href = rootPath + "/" + href;
+            }
+        });
+    </script>
 </body>
 </html>

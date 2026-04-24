@@ -46,6 +46,10 @@ http {
             proxy_set_header Accept-Encoding "";
 
             sub_filter_types *;
+            sub_filter '"/terminal/' '"./';
+            sub_filter "'/terminal/" "'./";
+            sub_filter '="/terminal/' '="./';
+            sub_filter "='/terminal/" "='./";
             sub_filter '/terminal/' './';
             sub_filter_once off;
         }
