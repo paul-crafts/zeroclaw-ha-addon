@@ -54,7 +54,7 @@ ZEROCLAW_PID=$!
 
 # Start ttyd (Web Terminal)
 echo "[INFO] Starting Web Terminal (ttyd)..."
-ttyd -p $TTYD_PORT -i 127.0.0.1 -W tmux new -A -s zeroclaw /bin/bash &
+ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W tmux new -A -s zeroclaw /bin/bash &
 TTYD_PID=$!
 
 # Start Nginx
@@ -85,7 +85,7 @@ while true; do
     fi
     if ! kill -0 "$TTYD_PID" 2>/dev/null; then
         echo "[WARN] ttyd died, restarting..."
-        ttyd -p $TTYD_PORT -i 127.0.0.1 -W tmux new -A -s zeroclaw /bin/bash &
+        ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W tmux new -A -s zeroclaw /bin/bash &
         TTYD_PID=$!
     fi
     if ! kill -0 "$NGINX_PID" 2>/dev/null; then
