@@ -1,5 +1,12 @@
-# Home Assistant Add-on files
-*.md
-!README.md
+# OS generated files
 .DS_Store
-.bin/
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Addon local files
+cloned_repos/
+*.log

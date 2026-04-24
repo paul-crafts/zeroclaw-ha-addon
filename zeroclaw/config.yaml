@@ -1,8 +1,11 @@
 name: "ZeroClaw"
-description: "LLM-powered AI Assistant for Home Assistant. Run 'zc-onboard' in terminal to begin."
-version: "0.2.3"
+description: "LLM-powered AI Assistant for Home Assistant. Now with built-in Web Terminal."
+version: "0.3.0"
 slug: "zeroclaw"
 hassio_api: true
+ingress: true
+panel_icon: mdi:robot-industrial
+panel_title: ZeroClaw
 init: false
 arch:
   - aarch64
@@ -16,6 +19,4 @@ options:
 schema:
   config_dir: "str"
 ports:
-  8080/tcp: 8080
   42617/tcp: 42617
-webui: http://[HOST]:[PORT:42617]
