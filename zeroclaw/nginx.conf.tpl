@@ -16,11 +16,11 @@ http {
     access_log /dev/stdout minimal;
 
     upstream zeroclaw_daemon {
-        server 127.0.0.1:42617;
+        server 127.0.0.1:%%ZEROCLAW_PORT%%;
     }
 
     upstream ttyd_terminal {
-        server 127.0.0.1:8100;
+        server 127.0.0.1:%%TTYD_PORT%%;
     }
 
     server {
@@ -32,18 +32,15 @@ http {
             try_files /index.html =404;
         }
 
-        # Terminal - proxy without stripping prefix as ttyd handles it
         location = /terminal { return 302 /terminal/; }
         location /terminal/ {
-            proxy_pass http://ttyd_terminal;
+            proxy_pass http://ttyd_terminal/;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_buffering off;
-            proxy_read_timeout 3600s;
-            proxy_send_timeout 3600s;
         }
 
         location /zeroclaw/ {
