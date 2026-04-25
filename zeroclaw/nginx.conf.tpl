@@ -103,7 +103,7 @@ http {
         }
 
         location = /dashboard {
-            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
+            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
@@ -114,7 +114,7 @@ http {
         }
 
         location /dashboard/ {
-            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
+            proxy_pass http://zeroclaw_daemon;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
