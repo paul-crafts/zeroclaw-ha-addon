@@ -1,6 +1,6 @@
 name: "ZeroClaw"
 description: "LLM-powered AI Assistant for Home Assistant. Now with built-in Web Terminal."
-version: "0.5.5"
+version: "0.5.6"
 slug: "zeroclaw"
 hassio_api: true
 ingress: true

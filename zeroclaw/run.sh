@@ -10,7 +10,8 @@ INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
-ZEROCLAW_PATH_PREFIX="/zeroclaw"
+ZEROCLAW_INTERNAL_PATH_PREFIX="/zeroclaw"
+ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 
 echo "[INFO] Starting ZeroClaw initialization..."
 
@@ -118,7 +119,6 @@ fetch_supervisor_addon_info() {
 
 echo "[INFO] Preparing ZeroClaw ingress configuration..."
 touch "$CONFIG_FILE"
-upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PATH_PREFIX}\""
 
 if [ ! -f "$INGRESS_TOKEN_FILE" ]; then
     tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE"
@@ -159,9 +159,17 @@ if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
     echo "[INFO] Supervisor hostname: ${SUPERVISOR_HOSTNAME:-<unknown>}"
     echo "[INFO] Supervisor ingress_entry: ${SUPERVISOR_INGRESS_ENTRY:-<empty>}"
     echo "[INFO] Supervisor ingress_url: ${SUPERVISOR_INGRESS_URL:-<empty>}"
+
+    if [ -n "${SUPERVISOR_INGRESS_URL:-}" ]; then
+        ZEROCLAW_PUBLIC_PATH_PREFIX="$SUPERVISOR_INGRESS_URL"
+    fi
 else
     echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."
 fi
+
+echo "[INFO] ZeroClaw internal path prefix: ${ZEROCLAW_INTERNAL_PATH_PREFIX}"
+echo "[INFO] ZeroClaw public path prefix: ${ZEROCLAW_PUBLIC_PATH_PREFIX}"
+upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PUBLIC_PATH_PREFIX}\""
 
 # ── 2. Environment Setup ──
 # Setup .bashrc for the terminal
@@ -191,7 +199,7 @@ echo "[INFO] Generating Nginx configuration..."
 sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
-    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_PATH_PREFIX}|g" \
+    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_INTERNAL_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \
     /nginx.conf.tpl > /etc/nginx/nginx.conf
 
