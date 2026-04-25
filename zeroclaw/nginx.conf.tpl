@@ -109,6 +109,9 @@ http {
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Uri $request_uri;
             proxy_redirect ~^(/.*)$ $resolved_ingress_base_path_fallback$1;
+            sub_filter '"/dashboard/' '"$dashboard_ingress_path/';
+            sub_filter "'/dashboard/" "'$dashboard_ingress_path/";
+            sub_filter 'url(/dashboard/' 'url($dashboard_ingress_path/';
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -120,6 +123,9 @@ http {
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Uri $request_uri;
             proxy_redirect ~^(/.*)$ $resolved_ingress_base_path_fallback$1;
+            sub_filter '"/dashboard/' '"$dashboard_ingress_path/';
+            sub_filter "'/dashboard/" "'$dashboard_ingress_path/";
+            sub_filter 'url(/dashboard/' 'url($dashboard_ingress_path/';
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
