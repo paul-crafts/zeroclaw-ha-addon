@@ -175,7 +175,8 @@ if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
 
     if [ -n "${SUPERVISOR_INGRESS_ENTRY:-}" ]; then
         ZEROCLAW_PUBLIC_PATH_PREFIX=$(join_path_prefix "$SUPERVISOR_INGRESS_ENTRY" "$ZEROCLAW_INTERNAL_PATH_PREFIX")
-        ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_PUBLIC_PATH_PREFIX"
+        # Upstream path stays as the daemon's internal path; only the public prefix includes the ingress entry
+        ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
     fi
 else
     echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."

@@ -58,7 +58,9 @@ http {
             return 302 ./;
         }
 
-        location = /dashboard { return 302 dashboard/; }
+        location = /dashboard {
+            return 302 dashboard/;
+        }
 
         location /dashboard/ {
             proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
