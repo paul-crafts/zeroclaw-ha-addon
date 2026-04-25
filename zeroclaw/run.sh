@@ -10,7 +10,7 @@ INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
-ZEROCLAW_INTERNAL_PATH_PREFIX="/zeroclaw"
+ZEROCLAW_INTERNAL_PATH_PREFIX="/"
 ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 
 echo "[INFO] Starting ZeroClaw initialization..."
@@ -160,8 +160,8 @@ if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
     echo "[INFO] Supervisor ingress_entry: ${SUPERVISOR_INGRESS_ENTRY:-<empty>}"
     echo "[INFO] Supervisor ingress_url: ${SUPERVISOR_INGRESS_URL:-<empty>}"
 
-    if [ -n "${SUPERVISOR_INGRESS_URL:-}" ]; then
-        ZEROCLAW_PUBLIC_PATH_PREFIX="$SUPERVISOR_INGRESS_URL"
+    if [ -n "${SUPERVISOR_INGRESS_ENTRY:-}" ]; then
+        ZEROCLAW_PUBLIC_PATH_PREFIX="$SUPERVISOR_INGRESS_ENTRY"
     fi
 else
     echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."
