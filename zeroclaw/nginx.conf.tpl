@@ -56,7 +56,23 @@ http {
         }
 
         # Dashboard Location
-        location = %%ZEROCLAW_PATH_PREFIX%% { return 302 %%ZEROCLAW_PATH_PREFIX%%/; }
+        location = %%ZEROCLAW_PATH_PREFIX%% {
+            proxy_pass http://zeroclaw_daemon;
+            proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
+            proxy_set_header X-Forwarded-Prefix $http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
+            proxy_set_header X-Ingress-Path $http_x_ingress_path;
+            proxy_set_header X-Forwarded-Uri $request_uri;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
+
+            sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/">';
+            sub_filter 'href="/_app/' 'href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter 'src="/_app/' 'src="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter '"/_app/' '"$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter 'href="/favicon' 'href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/favicon';
+            sub_filter 'src="/favicon' 'src="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/favicon';
+        }
         location %%ZEROCLAW_PATH_PREFIX%%/ {
             proxy_pass http://zeroclaw_daemon;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
@@ -65,6 +81,17 @@ http {
             proxy_set_header X-Forwarded-Uri $request_uri;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
+
+            # ZeroClaw still emits some absolute asset URLs, so keep them inside
+            # the current Home Assistant ingress path instead of sending them to
+            # the HA root where they 404.
+            sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/">';
+            sub_filter 'href="/_app/' 'href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter 'src="/_app/' 'src="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter '"/_app/' '"$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
+            sub_filter 'href="/favicon' 'href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/favicon';
+            sub_filter 'src="/favicon' 'src="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/favicon';
         }
 
         # Legacy API support
