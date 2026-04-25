@@ -62,6 +62,12 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_buffering off;
+            proxy_set_header Accept-Encoding "";
+
+            sub_filter_types *;
+            sub_filter '="/' '="./';
+            sub_filter "='/ " "='./";
+            sub_filter_once off;
         }
 
         location /api/ {
