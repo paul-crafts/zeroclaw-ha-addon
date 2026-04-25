@@ -55,7 +55,7 @@ http {
         }
 
         location = / {
-            proxy_pass http://zeroclaw_daemon;
+            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $http_x_ingress_path;
             proxy_set_header X-Forwarded-Prefix $http_x_ingress_path;
@@ -67,7 +67,7 @@ http {
         }
 
         location / {
-            proxy_pass http://zeroclaw_daemon;
+            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $http_x_ingress_path;
             proxy_set_header X-Forwarded-Prefix $http_x_ingress_path;

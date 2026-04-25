@@ -12,6 +12,7 @@ TTYD_PORT=8100
 ZEROCLAW_PORT=42617
 ZEROCLAW_INTERNAL_PATH_PREFIX="/"
 ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
+ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 
 echo "[INFO] Starting ZeroClaw initialization..."
 
@@ -162,6 +163,7 @@ if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
 
     if [ -n "${SUPERVISOR_INGRESS_ENTRY:-}" ]; then
         ZEROCLAW_PUBLIC_PATH_PREFIX="$SUPERVISOR_INGRESS_ENTRY"
+        ZEROCLAW_UPSTREAM_PATH_PREFIX="$SUPERVISOR_INGRESS_ENTRY"
     fi
 else
     echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."
@@ -169,6 +171,7 @@ fi
 
 echo "[INFO] ZeroClaw internal path prefix: ${ZEROCLAW_INTERNAL_PATH_PREFIX}"
 echo "[INFO] ZeroClaw public path prefix: ${ZEROCLAW_PUBLIC_PATH_PREFIX}"
+echo "[INFO] ZeroClaw upstream path prefix: ${ZEROCLAW_UPSTREAM_PATH_PREFIX}"
 upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PUBLIC_PATH_PREFIX}\""
 
 # ── 2. Environment Setup ──
@@ -200,6 +203,7 @@ sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
     -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_INTERNAL_PATH_PREFIX}|g" \
+    -e "s|%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%|${ZEROCLAW_UPSTREAM_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \
     /nginx.conf.tpl > /etc/nginx/nginx.conf
 
