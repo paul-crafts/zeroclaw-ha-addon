@@ -27,58 +27,51 @@ http {
         listen %%INGRESS_PORT%%;
         server_name _;
 
+        # Common Proxy Headers for Home Assistant Ingress
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_buffering off;
+        proxy_set_header Accept-Encoding ""; # Required for sub_filter to work on compressed responses
+
+        # Global Sub-Filter Settings
+        sub_filter_types *;
+        sub_filter_once off;
+
         location = / {
             root /var/www;
             try_files /index.html =404;
         }
 
+        # Terminal Location
         location = /terminal { return 302 terminal/; }
         location /terminal/ {
             proxy_pass http://ttyd_terminal;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_buffering off;
-            proxy_set_header Accept-Encoding "";
-
-            sub_filter_types *;
-            sub_filter '"/terminal/' '"./';
-            sub_filter "'/terminal/" "'./";
-            sub_filter '="/terminal/' '="./';
-            sub_filter "='/terminal/" "='./";
+            # Ensure internal terminal paths resolve relative to the current Ingress URL
             sub_filter '/terminal/' './';
-            sub_filter_once off;
         }
 
+        # Dashboard Location
         location /zeroclaw/ {
             proxy_pass http://zeroclaw_daemon/;
-            proxy_http_version 1.1;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_buffering off;
-            proxy_set_header Accept-Encoding "";
-
-            sub_filter_types *;
+            
+            # Rewrite absolute paths in HTML attributes to be relative
             sub_filter '="/' '="./';
-            sub_filter "='/ " "='./";
+            sub_filter "='/" "='./";
+            
+            # Fix SPA router basename by injecting the dynamic Ingress path
             sub_filter 'basename="/"' 'basename="'$http_x_ingress_path'/zeroclaw"';
             sub_filter 'base: "/"' 'base: "'$http_x_ingress_path'/zeroclaw"';
             sub_filter '"base":"/"' '"base":"'$http_x_ingress_path'/zeroclaw"';
-            sub_filter_once off;
         }
 
+        # Legacy API support
         location /api/ {
             proxy_pass http://zeroclaw_daemon/api/;
-            proxy_http_version 1.1;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_buffering off;
         }
 
         location = /health {
