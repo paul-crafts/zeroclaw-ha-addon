@@ -10,6 +10,7 @@ INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
+ZEROCLAW_PATH_PREFIX="/zeroclaw"
 
 echo "[INFO] Starting ZeroClaw initialization..."
 
@@ -106,7 +107,7 @@ remove_toml_key() {
 
 echo "[INFO] Preparing ZeroClaw ingress configuration..."
 touch "$CONFIG_FILE"
-remove_toml_key "gateway" "path_prefix"
+upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PATH_PREFIX}\""
 
 if [ ! -f "$INGRESS_TOKEN_FILE" ]; then
     tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE"
@@ -167,6 +168,7 @@ echo "[INFO] Generating Nginx configuration..."
 sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
+    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \
     /nginx.conf.tpl > /etc/nginx/nginx.conf
 

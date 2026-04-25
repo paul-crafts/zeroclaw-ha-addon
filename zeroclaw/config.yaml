@@ -1,10 +1,11 @@
 name: "ZeroClaw"
 description: "LLM-powered AI Assistant for Home Assistant. Now with built-in Web Terminal."
-version: "0.5.0"
+version: "0.5.1"
 slug: "zeroclaw"
 hassio_api: true
 ingress: true
 ingress_port: 8099
+ingress_entry: "/zeroclaw"
 panel_icon: mdi:robot-industrial
 panel_title: ZeroClaw
 init: false
