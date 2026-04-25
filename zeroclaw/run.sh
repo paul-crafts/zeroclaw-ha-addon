@@ -8,8 +8,12 @@ CONFIG_DIR=$(jq -r '.config_dir // empty' "$OPTIONS_FILE" 2>/dev/null || true)
 if [ -z "${CONFIG_DIR:-}" ] || [ "$CONFIG_DIR" = "null" ] || [ "${CONFIG_DIR#/}" = "$CONFIG_DIR" ]; then
     CONFIG_DIR="/config"
 fi
+ADDON_CONFIG_DIR="$CONFIG_DIR"
+ZEROCLAW_HOME_DIR="/config/zeroclaw"
+CONFIG_DIR="$ZEROCLAW_HOME_DIR"
 CONFIG_FILE="${CONFIG_DIR%/}/config.toml"
 INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
+ROOT_ZEROCLAW_DIR="/root/.zeroclaw"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
@@ -30,11 +34,26 @@ join_path_prefix() {
 }
 
 echo "[INFO] Starting ZeroClaw initialization..."
-echo "[INFO] Using ZeroClaw config directory: ${CONFIG_DIR}"
+echo "[INFO] Add-on UI config directory: ${ADDON_CONFIG_DIR}"
+echo "[INFO] ZeroClaw runtime config directory: ${CONFIG_DIR}"
+echo "[INFO] Mapping ~/.zeroclaw to: ${ZEROCLAW_HOME_DIR}"
 
 # Ensure directories exist
-mkdir -p "$CONFIG_DIR"
+mkdir -p "$ADDON_CONFIG_DIR"
+mkdir -p "$ZEROCLAW_HOME_DIR"
 mkdir -p /run/nginx
+
+# Keep ~/.zeroclaw compatibility while storing persistent data under /config/zeroclaw.
+# No automatic migration is performed; users can migrate manually.
+if [ -e "$ROOT_ZEROCLAW_DIR" ] && [ ! -L "$ROOT_ZEROCLAW_DIR" ]; then
+    echo "[WARN] ${ROOT_ZEROCLAW_DIR} exists and is not a symlink; leaving it unchanged."
+    echo "[WARN] Manually migrate it to ${ZEROCLAW_HOME_DIR} if you want a unified path."
+else
+    ln -sfn "$ZEROCLAW_HOME_DIR" "$ROOT_ZEROCLAW_DIR"
+fi
+
+export ZEROCLAW_CONFIG_DIR="$CONFIG_DIR"
+export ZEROCLAW_WORKSPACE="${CONFIG_DIR%/}/workspace"
 
 upsert_toml_key() {
     local section="$1"
@@ -202,7 +221,7 @@ ZEROCLAW_PID=$!
 
 # Start ttyd (Web Terminal)
 echo "[INFO] Starting Web Terminal (ttyd)..."
-ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W tmux new -A -s zeroclaw /bin/bash &
+ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W env ZEROCLAW_CONFIG_DIR="$ZEROCLAW_CONFIG_DIR" ZEROCLAW_WORKSPACE="$ZEROCLAW_WORKSPACE" tmux new -A -s zeroclaw /bin/bash &
 TTYD_PID=$!
 
 # Start Nginx
@@ -234,7 +253,7 @@ while true; do
     fi
     if ! kill -0 "$TTYD_PID" 2>/dev/null; then
         echo "[WARN] ttyd died, restarting..."
-        ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W tmux new -A -s zeroclaw /bin/bash &
+        ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W env ZEROCLAW_CONFIG_DIR="$ZEROCLAW_CONFIG_DIR" ZEROCLAW_WORKSPACE="$ZEROCLAW_WORKSPACE" tmux new -A -s zeroclaw /bin/bash &
         TTYD_PID=$!
     fi
     if ! kill -0 "$NGINX_PID" 2>/dev/null; then
