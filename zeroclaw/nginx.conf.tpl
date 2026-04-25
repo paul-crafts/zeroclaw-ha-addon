@@ -67,6 +67,9 @@ http {
             sub_filter_types *;
             sub_filter '="/' '="./';
             sub_filter "='/ " "='./";
+            sub_filter 'basename="/"' 'basename="'$http_x_ingress_path'/zeroclaw"';
+            sub_filter 'base: "/"' 'base: "'$http_x_ingress_path'/zeroclaw"';
+            sub_filter '"base":"/"' '"base":"'$http_x_ingress_path'/zeroclaw"';
             sub_filter_once off;
         }
 
