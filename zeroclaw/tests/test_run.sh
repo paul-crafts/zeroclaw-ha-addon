@@ -99,5 +99,13 @@ else
     exit 1
 fi
 
+if grep -q 'join_path_prefix' ../run.sh && \
+   grep -q 'ZEROCLAW_PUBLIC_PATH_PREFIX=$(join_path_prefix "\$SUPERVISOR_INGRESS_ENTRY" "\$ZEROCLAW_INTERNAL_PATH_PREFIX")' ../run.sh; then
+    echo "✅ Dashboard public prefix join logic present"
+else
+    echo "❌ Dashboard public prefix join logic missing"
+    exit 1
+fi
+
 echo "All tests passed! (MOCKED)"
 rm -rf /tmp/zeroclaw_config /tmp/run/nginx /tmp/nginx.conf

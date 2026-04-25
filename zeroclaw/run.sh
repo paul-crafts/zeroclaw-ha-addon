@@ -14,6 +14,18 @@ ZEROCLAW_INTERNAL_PATH_PREFIX="/dashboard"
 ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 
+join_path_prefix() {
+    local base="$1"
+    local suffix="$2"
+
+    if [ -z "$base" ] || [ "$base" = "/" ]; then
+        printf '%s\n' "$suffix"
+        return
+    fi
+
+    printf '%s%s\n' "${base%/}" "$suffix"
+}
+
 echo "[INFO] Starting ZeroClaw initialization..."
 
 # Ensure directories exist
@@ -162,8 +174,8 @@ if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
     echo "[INFO] Supervisor ingress_url: ${SUPERVISOR_INGRESS_URL:-<empty>}"
 
     if [ -n "${SUPERVISOR_INGRESS_ENTRY:-}" ]; then
-        ZEROCLAW_PUBLIC_PATH_PREFIX="$SUPERVISOR_INGRESS_ENTRY"
-        ZEROCLAW_UPSTREAM_PATH_PREFIX="$SUPERVISOR_INGRESS_ENTRY"
+        ZEROCLAW_PUBLIC_PATH_PREFIX=$(join_path_prefix "$SUPERVISOR_INGRESS_ENTRY" "$ZEROCLAW_INTERNAL_PATH_PREFIX")
+        ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_PUBLIC_PATH_PREFIX"
     fi
 else
     echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."
