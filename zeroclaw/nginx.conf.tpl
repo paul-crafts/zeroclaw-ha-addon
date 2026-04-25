@@ -59,13 +59,15 @@ http {
         location /zeroclaw/ {
             proxy_pass http://zeroclaw_daemon/;
 
-            # Fix React Router basename to match the HA ingress path
-            sub_filter 'basename:"/"' 'basename:"$http_x_ingress_path/zeroclaw/"';
-            sub_filter 'basename: "/"' 'basename: "$http_x_ingress_path/zeroclaw/"';
+            # 1. Inject a base tag to fix all asset loading (CSS/JS/Images) cleanly
+            sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path/zeroclaw/">';
 
-            # Fix asset paths to be relative
-            sub_filter '="/' '="./';
-            sub_filter "='/" "='./";
+            # 2. Overwrite the React Router default basename you found in the code
+            sub_filter 'basename: n="./"' 'basename: n="$http_x_ingress_path/zeroclaw/"';
+
+            # Ensure sub_filter applies to everything and replaces all instances
+            sub_filter_once off;
+            sub_filter_types *;
         }
 
         # Legacy API support
