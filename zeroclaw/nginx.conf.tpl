@@ -33,8 +33,6 @@ http {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
         proxy_buffering off;
         proxy_set_header Accept-Encoding ""; # Required for sub_filter to work on compressed responses
 
@@ -51,6 +49,8 @@ http {
         location = /terminal { return 302 terminal/; }
         location /terminal/ {
             proxy_pass http://ttyd_terminal;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
             # Ensure internal terminal paths resolve relative to the current Ingress URL
             sub_filter '/terminal/' './';
         }
