@@ -2,59 +2,57 @@
 set -e
 
 # ── 1. Configuration ──
-# We read from /data/options.json directly to avoid Supervisor API token issues
 OPTIONS_FILE="/data/options.json"
-CONFIG_DIR=$(jq -r '.config_dir // empty' "$OPTIONS_FILE" 2>/dev/null || true)
-if [ -z "${CONFIG_DIR:-}" ] || [ "$CONFIG_DIR" = "null" ] || [ "${CONFIG_DIR#/}" = "$CONFIG_DIR" ]; then
-    CONFIG_DIR="/config"
-fi
-ADDON_CONFIG_DIR="$CONFIG_DIR"
-ZEROCLAW_HOME_DIR="/config/zeroclaw"
-CONFIG_DIR="$ZEROCLAW_HOME_DIR"
-CONFIG_FILE="${CONFIG_DIR%/}/config.toml"
-INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
+# Default to /config/zeroclaw if not specified in HA UI options
+BASE_CONFIG_DIR=$(bashio::config 'config_dir' "/config")
+ZEROCLAW_DATA_DIR="${BASE_CONFIG_DIR%/}/zeroclaw"
+
+# Internal/Static paths
 ROOT_ZEROCLAW_DIR="/root/.zeroclaw"
-INGRESS_PORT=8099
-TTYD_PORT=8100
-ZEROCLAW_PORT=42617
-ZEROCLAW_INTERNAL_PATH_PREFIX="/dashboard"
-ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
-ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
+CONFIG_FILE="${ZEROCLAW_DATA_DIR}/config.toml"
+INGRESS_TOKEN_FILE="${ZEROCLAW_DATA_DIR}/.ha_ingress_token"
 
-join_path_prefix() {
-    local base="$1"
-    local suffix="$2"
+echo "[INFO] Persistent storage located at: ${ZEROCLAW_DATA_DIR}"
 
-    if [ -z "$base" ] || [ "$base" = "/" ]; then
-        printf '%s\n' "$suffix"
-        return
-    fi
-
-    printf '%s%s\n' "${base%/}" "$suffix"
-}
-
-echo "[INFO] Starting ZeroClaw initialization..."
-echo "[INFO] Add-on UI config directory: ${ADDON_CONFIG_DIR}"
-echo "[INFO] ZeroClaw runtime config directory: ${CONFIG_DIR}"
-echo "[INFO] Mapping ~/.zeroclaw to: ${ZEROCLAW_HOME_DIR}"
-
-# Ensure directories exist
-mkdir -p "$ADDON_CONFIG_DIR"
-mkdir -p "$ZEROCLAW_HOME_DIR"
+# ── 2. Directory & Symlink Setup ──
+# Ensure the persistent directory exists
+mkdir -p "$ZEROCLAW_DATA_DIR"
 mkdir -p /run/nginx
 
-# Keep ~/.zeroclaw compatibility while storing persistent data under /config/zeroclaw.
-# No automatic migration is performed; users can migrate manually.
-if [ -e "$ROOT_ZEROCLAW_DIR" ] && [ ! -L "$ROOT_ZEROCLAW_DIR" ]; then
-    echo "[WARN] ${ROOT_ZEROCLAW_DIR} exists and is not a symlink; leaving it unchanged."
-    echo "[WARN] Manually migrate it to ${ZEROCLAW_HOME_DIR} if you want a unified path."
-else
-    ln -sfn "$ZEROCLAW_HOME_DIR" "$ROOT_ZEROCLAW_DIR"
+# Force the symlink so /root/.zeroclaw always points to the persistent store
+if [ -L "$ROOT_ZEROCLAW_DIR" ]; then
+    rm "$ROOT_ZEROCLAW_DIR"
+elif [ -d "$ROOT_ZEROCLAW_DIR" ]; then
+    echo "[WARN] Local /root/.zeroclaw directory found, moving contents to persistent storage..."
+    cp -rp "$ROOT_ZEROCLAW_DIR/." "$ZEROCLAW_DATA_DIR/"
+    rm -rf "$ROOT_ZEROCLAW_DIR"
 fi
+ln -s "$ZEROCLAW_DATA_DIR" "$ROOT_ZEROCLAW_DIR"
 
-export ZEROCLAW_CONFIG_DIR="$CONFIG_DIR"
-export ZEROCLAW_WORKSPACE="${CONFIG_DIR%/}/workspace"
+# Set environment variables for the application
+export ZEROCLAW_CONFIG_DIR="$ROOT_ZEROCLAW_DIR"
+export ZEROCLAW_WORKSPACE="${ROOT_ZEROCLAW_DIR}/workspace"
+mkdir -p "$ZEROCLAW_WORKSPACE"
 
+# ── 3. Token & Ingress Config ──
+touch "$CONFIG_FILE"
+
+# Generate or read Ingress Token
+if [ ! -f "$INGRESS_TOKEN_FILE" ]; then
+    bashio::log.info "Generating new Ingress token..."
+    tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE"
+fi
+ZEROCLAW_INGRESS_TOKEN=$(cat "$INGRESS_TOKEN_FILE")
+ZEROCLAW_INGRESS_TOKEN_HASH=$(printf '%s' "$ZEROCLAW_INGRESS_TOKEN" | sha256sum | awk '{print $1}')
+
+# Simple TOML update for the hash (using your existing upsert_toml_key function)
+# ... [Insert your upsert_toml_key function here] ...
+
+upsert_toml_key "gateway" "paired_tokens" "[\"${ZEROCLAW_INGRESS_TOKEN_HASH}\"]"
+upsert_toml_key "gateway" "path_prefix" "\"/dashboard\""
+upsert_toml_key "gateway" "require_pairing" "false"
+
+# ── 4. Nginx & Service Start ──
 upsert_toml_key() {
     local section="$1"
     local key="$2"
