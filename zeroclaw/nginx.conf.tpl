@@ -58,6 +58,12 @@ http {
         # Dashboard Location
         location /zeroclaw/ {
             proxy_pass http://zeroclaw_daemon/;
+
+            # Fix React Router basename to match the HA ingress path
+            sub_filter 'basename:"/"' 'basename:"$http_x_ingress_path/zeroclaw/"';
+            sub_filter 'basename: "/"' 'basename: "$http_x_ingress_path/zeroclaw/"';
+
+            # Fix asset paths to be relative
             sub_filter '="/' '="./';
             sub_filter "='/" "='./";
         }
