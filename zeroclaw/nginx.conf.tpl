@@ -68,7 +68,7 @@ http {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
-            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$http_x_ingress_path$1;
 
             sub_filter '<head>' '<head>\n<base href="./">';
             sub_filter 'href="/_app/' 'href="./_app/';
@@ -86,7 +86,7 @@ http {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
-            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$http_x_ingress_path$1;
 
             # ZeroClaw still emits some absolute asset URLs, so keep them inside
             # the current Home Assistant ingress path instead of sending them to
@@ -106,7 +106,7 @@ http {
             proxy_set_header X-Forwarded-Prefix $http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
             proxy_set_header X-Ingress-Path $http_x_ingress_path;
             proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
-            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$http_x_ingress_path$1;
         }
 
         location = /health {
