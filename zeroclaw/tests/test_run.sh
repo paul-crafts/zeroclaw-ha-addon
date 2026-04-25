@@ -46,7 +46,6 @@ CONFIG_DIR="/tmp/zeroclaw_config"
 INGRESS_PORT="8099"
 TTYD_PORT="8100"
 ZEROCLAW_PORT="42617"
-ZEROCLAW_PATH_PREFIX="/zeroclaw"
 ZEROCLAW_INGRESS_TOKEN="test-ingress-token"
 mkdir -p "$CONFIG_DIR"
 mkdir -p /tmp/run/nginx
@@ -55,7 +54,6 @@ mkdir -p /tmp/run/nginx
 sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
-    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \
     ../nginx.conf.tpl > /tmp/nginx.conf
 
@@ -67,10 +65,18 @@ else
 fi
 
 if grep -q 'proxy_set_header Authorization "Bearer test-ingress-token";' /tmp/nginx.conf && \
-   grep -q 'location /zeroclaw/' /tmp/nginx.conf; then
+   grep -q 'location / {' /tmp/nginx.conf; then
     echo "✅ Ingress auth header wiring successful"
 else
     echo "❌ Ingress auth header wiring failed"
+    exit 1
+fi
+
+if grep -q 'return 302 \$scheme://\$http_host\$http_x_ingress_path/;' /tmp/nginx.conf && \
+   grep -q 'href="\./_app/' /tmp/nginx.conf; then
+    echo "✅ Root-mounted ingress asset routing successful"
+else
+    echo "❌ Root-mounted ingress asset routing failed"
     exit 1
 fi
 
