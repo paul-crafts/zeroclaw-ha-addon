@@ -58,15 +58,8 @@ http {
         # Dashboard Location
         location /zeroclaw/ {
             proxy_pass http://zeroclaw_daemon/;
-            
-            # Rewrite absolute paths in HTML attributes to be relative
             sub_filter '="/' '="./';
             sub_filter "='/" "='./";
-            
-            # Fix SPA router basename by injecting the dynamic Ingress path
-            sub_filter 'basename="/"' 'basename="'$http_x_ingress_path'/zeroclaw"';
-            sub_filter 'base: "/"' 'base: "'$http_x_ingress_path'/zeroclaw"';
-            sub_filter '"base":"/"' '"base":"'$http_x_ingress_path'/zeroclaw"';
         }
 
         # Legacy API support

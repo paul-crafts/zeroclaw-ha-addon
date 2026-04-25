@@ -59,6 +59,7 @@ TTYD_PID=$!
 
 # Start Nginx
 echo "[INFO] Starting Nginx proxy..."
+sleep 2
 nginx -g "daemon off;" &
 NGINX_PID=$!
 
