@@ -87,38 +87,6 @@ upsert_toml_key() {
     mv "$tmp_file" "$CONFIG_FILE"
 }
 
-remove_toml_key() {
-    local section="$1"
-    local key="$2"
-    local tmp_file
-    tmp_file=$(mktemp)
-
-    awk -v section="$section" -v key="$key" '
-        BEGIN {
-            in_section = 0
-        }
-        {
-            if ($0 ~ "^\\[" section "\\]$") {
-                in_section = 1
-                print
-                next
-            }
-
-            if (in_section && $0 ~ "^\\[.*\\]$") {
-                in_section = 0
-            }
-
-            if (in_section && $0 ~ "^" key "[[:space:]]*=") {
-                next
-            }
-
-            print
-        }
-    ' "$CONFIG_FILE" > "$tmp_file"
-
-    mv "$tmp_file" "$CONFIG_FILE"
-}
-
 fetch_supervisor_addon_info() {
     if [ -z "${SUPERVISOR_TOKEN:-}" ]; then
         echo "[WARN] SUPERVISOR_TOKEN not available; skipping Supervisor self-info lookup."
@@ -216,7 +184,6 @@ echo "[INFO] Generating Nginx configuration..."
 sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
-    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_INTERNAL_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%|${ZEROCLAW_UPSTREAM_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_PUBLIC_PATH_PREFIX%%|${ZEROCLAW_PUBLIC_PATH_PREFIX}|g" \
     -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \

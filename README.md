@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.5.21-6366f1?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.5.22-6366f1?style=for-the-badge" alt="Version">
   <a href="https://github.com/paul-crafts/zeroclaw-ha-addon/blob/main/LICENSE"><img src="https://img.shields.io/github/license/paul-crafts/zeroclaw-ha-addon?style=for-the-badge&color=818cf8" alt="License"></a>
   <a href="https://my.home-assistant.io/redirect/supervisor_addon/?addon=zeroclaw&repository_url=https%3A%2F%2Fgithub.com%2Fpaul-crafts%2Fzeroclaw-ha-addon"><img src="https://img.shields.io/badge/Home%20Assistant-Add--on-blue?style=for-the-badge&logo=home-assistant" alt="HA Addon"></a>
 </p>

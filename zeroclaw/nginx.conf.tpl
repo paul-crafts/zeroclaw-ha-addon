@@ -14,11 +14,7 @@ http {
     absolute_redirect off;
     port_in_redirect off;
 
-    log_format minimal '$remote_addr - "$request" status=$status '
-                       'uri="$request_uri" ref="$http_referer" '
-                       'x_ingress="$http_x_ingress_path" x_fwd_prefix="$http_x_forwarded_prefix" '
-                       'resolved_base="$resolved_ingress_base_path_fallback" dashboard_path="$dashboard_ingress_path" '
-                       'upstream_status="$upstream_status" upstream_loc="$upstream_http_location" sent_loc="$sent_http_location"';
+    log_format minimal '$remote_addr - $request_uri $status';
     access_log /dev/stdout minimal;
 
     # Build the full dashboard prefix from HA ingress metadata.
