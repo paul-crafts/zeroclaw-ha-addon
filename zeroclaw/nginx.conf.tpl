@@ -11,6 +11,8 @@ http {
     default_type application/octet-stream;
     sendfile on;
     keepalive_timeout 65;
+    absolute_redirect off;
+    port_in_redirect off;
 
     log_format minimal '$remote_addr - $request_uri $status';
     access_log /dev/stdout minimal;
@@ -29,10 +31,11 @@ http {
 
         # Common Proxy Headers for Home Assistant Ingress
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $http_host;
         proxy_buffering off;
         proxy_set_header Accept-Encoding ""; # Required for sub_filter to work on compressed responses
 
@@ -65,6 +68,7 @@ http {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
 
             sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/">';
             sub_filter 'href="/_app/' 'href="$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%/_app/';
@@ -82,6 +86,7 @@ http {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
             proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
 
             # ZeroClaw still emits some absolute asset URLs, so keep them inside
             # the current Home Assistant ingress path instead of sending them to
@@ -100,6 +105,8 @@ http {
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Forwarded-Prefix $http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
             proxy_set_header X-Ingress-Path $http_x_ingress_path;
+            proxy_redirect ~^(/.*)$ $http_x_ingress_path$1;
+            proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$1;
         }
 
         location = /health {
