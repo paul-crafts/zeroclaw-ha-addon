@@ -104,6 +104,7 @@ http {
             proxy_set_header X-Ingress-Path $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Uri $request_uri;
+            proxy_redirect ~^(/.*)$ $resolved_ingress_base_path_fallback$1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
@@ -114,6 +115,7 @@ http {
             proxy_set_header X-Ingress-Path $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Uri $request_uri;
+            proxy_redirect ~^(/.*)$ $resolved_ingress_base_path_fallback$1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
