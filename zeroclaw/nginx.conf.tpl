@@ -17,11 +17,39 @@ http {
     log_format minimal '$remote_addr - $request_uri $status';
     access_log /dev/stdout minimal;
 
-    # Build the full dashboard prefix from what HA sends in X-Ingress-Path
-    # HA sends the bare ingress entry; we need to append /dashboard
-    map $http_x_ingress_path $dashboard_ingress_path {
-        default  "%%ZEROCLAW_PUBLIC_PATH_PREFIX%%";
-        ~^(.+)$  "$1/dashboard";
+    # Build the full dashboard prefix from HA ingress metadata.
+    # Preferred source is X-Ingress-Path. If unavailable, fall back to:
+    # 1) X-Forwarded-Prefix, then
+    # 2) request URI slug matching "/..._zeroclaw",
+    # 3) static value generated at startup.
+    map $http_x_ingress_path $ingress_base_path {
+        default "";
+        ~^(/.+)$ "$1";
+    }
+
+    map $http_x_forwarded_prefix $forwarded_prefix_base_path {
+        default "";
+        ~^(/.+)$ "$1";
+    }
+
+    map $request_uri $uri_ingress_base_path {
+        default "";
+        ~^(/[^/?#]*_zeroclaw)(?:/|$) "$1";
+    }
+
+    map $ingress_base_path $resolved_ingress_base_path {
+        default "$ingress_base_path";
+        ""      "$forwarded_prefix_base_path";
+    }
+
+    map $resolved_ingress_base_path $resolved_ingress_base_path_fallback {
+        default "$resolved_ingress_base_path";
+        ""      "$uri_ingress_base_path";
+    }
+
+    map $resolved_ingress_base_path_fallback $dashboard_ingress_path {
+        default "$resolved_ingress_base_path_fallback/dashboard";
+        ""      "%%ZEROCLAW_PUBLIC_PATH_PREFIX%%";
     }
 
     upstream zeroclaw_daemon {
