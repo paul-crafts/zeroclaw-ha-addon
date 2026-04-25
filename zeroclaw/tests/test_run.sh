@@ -74,7 +74,8 @@ else
     exit 1
 fi
 
-if grep -q 'location = /zeroclaw {' /tmp/nginx.conf && \
+if grep -q 'return 302 zeroclaw;' /tmp/nginx.conf && \
+   grep -q 'location = /zeroclaw {' /tmp/nginx.conf && \
    grep -q 'proxy_set_header X-Forwarded-Prefix \$http_x_ingress_path/zeroclaw;' /tmp/nginx.conf; then
     echo "✅ Subpath ingress routing successful"
 else

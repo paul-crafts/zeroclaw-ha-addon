@@ -55,7 +55,7 @@ http {
         }
 
         location = / {
-            return 302 $scheme://$http_host$http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
+            return 302 zeroclaw;
         }
 
         location = %%ZEROCLAW_PATH_PREFIX%% {
