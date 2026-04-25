@@ -55,18 +55,19 @@ http {
             sub_filter '/terminal/' './';
         }
 
-# Dashboard Location
+        # Dashboard Location
         location /zeroclaw/ {
             proxy_pass http://zeroclaw_daemon/;
 
-            # 1. Overwrite the React Router default basename (From our previous fix)
-            sub_filter 'basename: n="./"' 'basename: n="$http_x_ingress_path/zeroclaw/"';
+            # 1. Inject a base tag to fix all asset loading (CSS/JS/Images) cleanly
+            sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path/zeroclaw/">';
 
-            # 2. Fix the absolute asset paths for CSS and HTML script tags
+            # 2. Overwrite the specific React Router minified basename we found
+            sub_filter 'basename: n="./"' 'basename: n="$http_x_ingress_path/zeroclaw/"';
+            
+            # 3. Fix the absolute asset paths for CSS and HTML script tags
             sub_filter 'href="/_app/' 'href="$http_x_ingress_path/zeroclaw/_app/';
             sub_filter 'src="/_app/' 'src="$http_x_ingress_path/zeroclaw/_app/';
-            
-            # 3. Catch dynamic JavaScript imports (chunks loading other chunks)
             sub_filter '"/_app/' '"$http_x_ingress_path/zeroclaw/_app/';
 
             # Ensure sub_filter applies to everything and replaces all instances
