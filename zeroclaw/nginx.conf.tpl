@@ -81,7 +81,12 @@ http {
             try_files /index.html =404;
         }
 
-        location = /terminal { return 302 terminal/; }
+        location = /terminal {
+            proxy_pass http://ttyd_terminal;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            sub_filter '/terminal/' './';
+        }
         location /terminal/ {
             proxy_pass http://ttyd_terminal;
             proxy_set_header Upgrade $http_upgrade;
@@ -94,7 +99,13 @@ http {
         }
 
         location = /dashboard {
-            return 302 dashboard/;
+            proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
+            proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
+            proxy_set_header X-Ingress-Path $dashboard_ingress_path;
+            proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
+            proxy_set_header X-Forwarded-Uri $request_uri;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
         }
 
         location /dashboard/ {
