@@ -17,6 +17,13 @@ http {
     log_format minimal '$remote_addr - $request_uri $status';
     access_log /dev/stdout minimal;
 
+    # Build the full dashboard prefix from what HA sends in X-Ingress-Path
+    # HA sends the bare ingress entry; we need to append /dashboard
+    map $http_x_ingress_path $dashboard_ingress_path {
+        default  "%%ZEROCLAW_PUBLIC_PATH_PREFIX%%";
+        ~^(.+)$  "$1/dashboard";
+    }
+
     upstream zeroclaw_daemon {
         server 127.0.0.1:%%ZEROCLAW_PORT%%;
     }
@@ -65,8 +72,8 @@ http {
         location /dashboard/ {
             proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
-            proxy_set_header X-Ingress-Path $http_x_ingress_path;
-            proxy_set_header X-Forwarded-Prefix $http_x_ingress_path;
+            proxy_set_header X-Ingress-Path $dashboard_ingress_path;
+            proxy_set_header X-Forwarded-Prefix $dashboard_ingress_path;
             proxy_set_header X-Forwarded-Uri $request_uri;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
