@@ -29,7 +29,9 @@ export -f bashio::log.error
 alias zeroclaw='echo "MOCKED zeroclaw"'
 alias ttyd='echo "MOCKED ttyd"'
 alias nginx='echo "MOCKED nginx"'
+alias curl='echo "{\"data\":{\"ingress_url\":\"/app/771b918e_zeroclaw\",\"ingress_entry\":\"zeroclaw\",\"hostname\":\"771b918e_zeroclaw\"}}"'
 shopt -s expand_aliases
+export SUPERVISOR_TOKEN="test-supervisor-token"
 
 echo "Running tests for run.sh..."
 
@@ -80,6 +82,13 @@ if grep -q 'return 302 zeroclaw;' /tmp/nginx.conf && \
     echo "✅ Subpath ingress routing successful"
 else
     echo "❌ Subpath ingress routing failed"
+    exit 1
+fi
+
+if grep -q 'SUPERVISOR_TOKEN="test-supervisor-token"' <(declare -p SUPERVISOR_TOKEN 2>/dev/null); then
+    echo "✅ Supervisor metadata lookup mocked"
+else
+    echo "❌ Supervisor metadata lookup mock failed"
     exit 1
 fi
 

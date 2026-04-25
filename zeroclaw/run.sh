@@ -105,6 +105,17 @@ remove_toml_key() {
     mv "$tmp_file" "$CONFIG_FILE"
 }
 
+fetch_supervisor_addon_info() {
+    if [ -z "${SUPERVISOR_TOKEN:-}" ]; then
+        echo "[WARN] SUPERVISOR_TOKEN not available; skipping Supervisor self-info lookup."
+        return 1
+    fi
+
+    curl -fsSL \
+        -H "Authorization: Bearer ${SUPERVISOR_TOKEN}" \
+        http://supervisor/addons/self/info
+}
+
 echo "[INFO] Preparing ZeroClaw ingress configuration..."
 touch "$CONFIG_FILE"
 upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PATH_PREFIX}\""
@@ -138,6 +149,18 @@ else
     fi
     upsert_toml_key "gateway" "paired_tokens" "${UPDATED_PAIRED_TOKENS_LINE#paired_tokens = }"
     echo "[INFO] Registered persistent ingress dashboard token."
+fi
+
+echo "[INFO] Querying Supervisor for addon ingress metadata..."
+if SUPERVISOR_INFO_JSON=$(fetch_supervisor_addon_info 2>/dev/null); then
+    SUPERVISOR_INGRESS_URL=$(printf '%s' "$SUPERVISOR_INFO_JSON" | jq -r '.data.ingress_url // empty')
+    SUPERVISOR_INGRESS_ENTRY=$(printf '%s' "$SUPERVISOR_INFO_JSON" | jq -r '.data.ingress_entry // empty')
+    SUPERVISOR_HOSTNAME=$(printf '%s' "$SUPERVISOR_INFO_JSON" | jq -r '.data.hostname // empty')
+    echo "[INFO] Supervisor hostname: ${SUPERVISOR_HOSTNAME:-<unknown>}"
+    echo "[INFO] Supervisor ingress_entry: ${SUPERVISOR_INGRESS_ENTRY:-<empty>}"
+    echo "[INFO] Supervisor ingress_url: ${SUPERVISOR_INGRESS_URL:-<empty>}"
+else
+    echo "[WARN] Unable to fetch Supervisor self-info; continuing with static ingress settings."
 fi
 
 # ── 2. Environment Setup ──
