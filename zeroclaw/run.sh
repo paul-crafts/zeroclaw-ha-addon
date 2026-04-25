@@ -4,7 +4,10 @@ set -e
 # ── 1. Configuration ──
 # We read from /data/options.json directly to avoid Supervisor API token issues
 OPTIONS_FILE="/data/options.json"
-CONFIG_DIR=$(jq -r '.config_dir // "/config"' "$OPTIONS_FILE")
+CONFIG_DIR=$(jq -r '.config_dir // empty' "$OPTIONS_FILE" 2>/dev/null || true)
+if [ -z "${CONFIG_DIR:-}" ] || [ "$CONFIG_DIR" = "null" ] || [ "${CONFIG_DIR#/}" = "$CONFIG_DIR" ]; then
+    CONFIG_DIR="/config"
+fi
 CONFIG_FILE="${CONFIG_DIR%/}/config.toml"
 INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
@@ -27,6 +30,7 @@ join_path_prefix() {
 }
 
 echo "[INFO] Starting ZeroClaw initialization..."
+echo "[INFO] Using ZeroClaw config directory: ${CONFIG_DIR}"
 
 # Ensure directories exist
 mkdir -p "$CONFIG_DIR"
