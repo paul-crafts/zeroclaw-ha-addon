@@ -54,18 +54,20 @@ upsert_toml_key() {
 }
 
 # ── 3. Directory & Symlink Setup ──
+# Create target directory first
 mkdir -p "$ZEROCLAW_DATA_DIR"
 mkdir -p /run/nginx
 
-# Ensure ~/.zeroclaw is a symlink to persistent storage
-if [ -L "$ROOT_ZEROCLAW_DIR" ]; then
-    rm "$ROOT_ZEROCLAW_DIR"
-elif [ -d "$ROOT_ZEROCLAW_DIR" ]; then
+# Robust symlink handling to prevent first-run crashes:
+if [ ! -L "$ROOT_ZEROCLAW_DIR" ] && [ -d "$ROOT_ZEROCLAW_DIR" ]; then
     echo "[INFO] Migrating existing local data to persistent storage..."
-    cp -rp "$ROOT_ZEROCLAW_DIR/." "$ZEROCLAW_DATA_DIR/"
+    # '|| true' ensures script continues if directory is empty or busy
+    cp -rp "$ROOT_ZEROCLAW_DIR/." "$ZEROCLAW_DATA_DIR/" || true
     rm -rf "$ROOT_ZEROCLAW_DIR"
 fi
-ln -s "$ZEROCLAW_DATA_DIR" "$ROOT_ZEROCLAW_DIR"
+
+# Force symbolic link creation (f=force, n=no-dereference)
+ln -sfn "$ZEROCLAW_DATA_DIR" "$ROOT_ZEROCLAW_DIR"
 
 # Set application environment
 export ZEROCLAW_CONFIG_DIR="$ROOT_ZEROCLAW_DIR"
@@ -73,14 +75,17 @@ export ZEROCLAW_WORKSPACE="${ROOT_ZEROCLAW_DIR}/workspace"
 mkdir -p "$ZEROCLAW_WORKSPACE"
 
 # ── 4. Ingress & TOML Setup ──
-touch "$CONFIG_FILE"
+if [ ! -f "$CONFIG_FILE" ]; then
+    touch "$CONFIG_FILE"
+fi
 
 # Manage the unique Ingress Token
 if [ ! -f "$INGRESS_TOKEN_FILE" ]; then
     echo "[INFO] Creating new Ingress token..."
-    tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE"
-    chmod 600 "$INGRESS_TOKEN_FILE"
+    tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE" || true
+    chmod 600 "$INGRESS_TOKEN_FILE" || true
 fi
+
 ZEROCLAW_INGRESS_TOKEN=$(cat "$INGRESS_TOKEN_FILE")
 ZEROCLAW_INGRESS_TOKEN_HASH=$(printf '%s' "$ZEROCLAW_INGRESS_TOKEN" | sha256sum | awk '{print $1}')
 
@@ -90,7 +95,6 @@ upsert_toml_key "gateway" "path_prefix" "\"/dashboard\""
 upsert_toml_key "gateway" "require_pairing" "false"
 
 # ── 5. Environment & Proxy Setup ──
-# Basic shell customization for ttyd
 if [ ! -f /root/.bashrc ]; then
     cat > /root/.bashrc << 'EOF'
 export PS1='\[\033[01;32m\]zeroclaw\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
@@ -112,9 +116,8 @@ sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
 
 # ── 6. Service Management ──
 
-# Shutdown handler
 function shutdown() {
-    echo "[INFO] Stopping services..."
+    echo "[INFO] Shutdown signal received, stopping services..."
     kill -TERM "$NGINX_PID" "$TTYD_PID" "$ZEROCLAW_PID" 2>/dev/null || true
     exit 0
 }
@@ -128,7 +131,9 @@ echo "[INFO] Starting Web Terminal..."
 ttyd -p $TTYD_PORT -i 127.0.0.1 -b /terminal -W env ZEROCLAW_CONFIG_DIR="$ROOT_ZEROCLAW_DIR" ZEROCLAW_WORKSPACE="$ZEROCLAW_WORKSPACE" tmux new -A -s zeroclaw /bin/bash &
 TTYD_PID=$!
 
-sleep 2
+# Wait for internal services to bind before starting proxy
+sleep 3
+
 echo "[INFO] Starting Nginx proxy..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
