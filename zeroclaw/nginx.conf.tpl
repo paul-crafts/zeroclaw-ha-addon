@@ -41,7 +41,7 @@ http {
         sub_filter_types *;
         sub_filter_once off;
 
-        location = /landing {
+        location = / {
             root /var/www;
             try_files /index.html =404;
         }
@@ -54,7 +54,11 @@ http {
             sub_filter '/terminal/' './';
         }
 
-        location = / {
+        location = /landing {
+            return 302 ./;
+        }
+
+        location = /dashboard {
             proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $http_x_ingress_path;
@@ -66,7 +70,7 @@ http {
             proxy_redirect ~^https?://[^/]+(?::\d+)?(/.*)$ $scheme://$http_host$http_x_ingress_path$1;
         }
 
-        location / {
+        location /dashboard/ {
             proxy_pass http://zeroclaw_daemon%%ZEROCLAW_UPSTREAM_PATH_PREFIX%%/;
             proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
             proxy_set_header X-Ingress-Path $http_x_ingress_path;

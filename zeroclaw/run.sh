@@ -10,7 +10,7 @@ INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
-ZEROCLAW_INTERNAL_PATH_PREFIX="/"
+ZEROCLAW_INTERNAL_PATH_PREFIX="/dashboard"
 ZEROCLAW_PUBLIC_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 ZEROCLAW_UPSTREAM_PATH_PREFIX="$ZEROCLAW_INTERNAL_PATH_PREFIX"
 
@@ -173,6 +173,7 @@ echo "[INFO] ZeroClaw internal path prefix: ${ZEROCLAW_INTERNAL_PATH_PREFIX}"
 echo "[INFO] ZeroClaw public path prefix: ${ZEROCLAW_PUBLIC_PATH_PREFIX}"
 echo "[INFO] ZeroClaw upstream path prefix: ${ZEROCLAW_UPSTREAM_PATH_PREFIX}"
 upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PUBLIC_PATH_PREFIX}\""
+upsert_toml_key "gateway" "require_pairing" "false"
 
 # ── 2. Environment Setup ──
 # Setup .bashrc for the terminal

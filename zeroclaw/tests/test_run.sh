@@ -49,7 +49,7 @@ INGRESS_PORT="8099"
 TTYD_PORT="8100"
 ZEROCLAW_PORT="42617"
 ZEROCLAW_INGRESS_TOKEN="test-ingress-token"
-ZEROCLAW_UPSTREAM_PATH_PREFIX="/api/hassio_ingress/test-session"
+ZEROCLAW_UPSTREAM_PATH_PREFIX="/api/hassio_ingress/test-session/dashboard"
 mkdir -p "$CONFIG_DIR"
 mkdir -p /tmp/run/nginx
 
@@ -69,19 +69,19 @@ else
 fi
 
 if grep -q 'proxy_set_header Authorization "Bearer test-ingress-token";' /tmp/nginx.conf && \
-   grep -q 'location / {' /tmp/nginx.conf; then
+   grep -q 'location /dashboard/ {' /tmp/nginx.conf; then
     echo "✅ Ingress auth header wiring successful"
 else
     echo "❌ Ingress auth header wiring failed"
     exit 1
 fi
 
-if grep -q 'proxy_set_header X-Forwarded-Prefix \$http_x_ingress_path;' /tmp/nginx.conf && \
-   grep -q 'proxy_pass http://zeroclaw_daemon/api/hassio_ingress/test-session/;' /tmp/nginx.conf && \
+if grep -q 'location = / {' /tmp/nginx.conf && \
+   grep -q 'proxy_pass http://zeroclaw_daemon/api/hassio_ingress/test-session/dashboard/;' /tmp/nginx.conf && \
    grep -q 'proxy_redirect ~^(/.*)$ \$scheme://\$http_host\$http_x_ingress_path\$1;' /tmp/nginx.conf; then
-    echo "✅ Root ingress routing successful"
+    echo "✅ Landing and dashboard routing successful"
 else
-    echo "❌ Root ingress routing failed"
+    echo "❌ Landing and dashboard routing failed"
     exit 1
 fi
 
