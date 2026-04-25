@@ -56,28 +56,23 @@ http {
         }
 
         # Dashboard Location
-        location /zeroclaw/ {
-            proxy_pass http://zeroclaw_daemon/;
-
-            # 1. Inject a base tag to fix all asset loading (CSS/JS/Images) cleanly
-            sub_filter '<head>' '<head>\n<base href="$http_x_ingress_path/zeroclaw/">';
-
-            # 2. Overwrite the specific React Router minified basename we found
-            sub_filter 'basename: n="./"' 'basename: n="$http_x_ingress_path/zeroclaw/"';
-            
-            # 3. Fix the absolute asset paths for CSS and HTML script tags
-            sub_filter 'href="/_app/' 'href="$http_x_ingress_path/zeroclaw/_app/';
-            sub_filter 'src="/_app/' 'src="$http_x_ingress_path/zeroclaw/_app/';
-            sub_filter '"/_app/' '"$http_x_ingress_path/zeroclaw/_app/';
-
-            # Ensure sub_filter applies to everything and replaces all instances
-            sub_filter_once off;
-            sub_filter_types *;
+        location = %%ZEROCLAW_PATH_PREFIX%% { return 302 %%ZEROCLAW_PATH_PREFIX%%/; }
+        location %%ZEROCLAW_PATH_PREFIX%%/ {
+            proxy_pass http://zeroclaw_daemon;
+            proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
+            proxy_set_header X-Forwarded-Prefix $http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
+            proxy_set_header X-Ingress-Path $http_x_ingress_path;
+            proxy_set_header X-Forwarded-Uri $request_uri;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
         }
 
         # Legacy API support
         location /api/ {
             proxy_pass http://zeroclaw_daemon/api/;
+            proxy_set_header Authorization "Bearer %%ZEROCLAW_INGRESS_TOKEN%%";
+            proxy_set_header X-Forwarded-Prefix $http_x_ingress_path%%ZEROCLAW_PATH_PREFIX%%;
+            proxy_set_header X-Ingress-Path $http_x_ingress_path;
         }
 
         location = /health {

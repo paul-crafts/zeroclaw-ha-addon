@@ -5,15 +5,108 @@ set -e
 # We read from /data/options.json directly to avoid Supervisor API token issues
 OPTIONS_FILE="/data/options.json"
 CONFIG_DIR=$(jq -r '.config_dir // "/config"' "$OPTIONS_FILE")
+CONFIG_FILE="${CONFIG_DIR%/}/config.toml"
+INGRESS_TOKEN_FILE="${CONFIG_DIR%/}/.ha_ingress_token"
 INGRESS_PORT=8099
 TTYD_PORT=8100
 ZEROCLAW_PORT=42617
+ZEROCLAW_PATH_PREFIX="/zeroclaw"
 
 echo "[INFO] Starting ZeroClaw initialization..."
 
 # Ensure directories exist
 mkdir -p "$CONFIG_DIR"
 mkdir -p /run/nginx
+
+upsert_toml_key() {
+    local section="$1"
+    local key="$2"
+    local value="$3"
+    local tmp_file
+    tmp_file=$(mktemp)
+
+    awk -v section="$section" -v key="$key" -v value="$value" '
+        BEGIN {
+            in_section = 0
+            section_found = 0
+            key_written = 0
+        }
+        {
+            if ($0 ~ "^\\[" section "\\]$") {
+                print
+                in_section = 1
+                section_found = 1
+                next
+            }
+
+            if (in_section && $0 ~ "^\\[.*\\]$") {
+                if (!key_written) {
+                    print key " = " value
+                    key_written = 1
+                }
+                in_section = 0
+            }
+
+            if (in_section && $0 ~ "^" key "[[:space:]]*=") {
+                if (!key_written) {
+                    print key " = " value
+                    key_written = 1
+                }
+                next
+            }
+
+            print
+        }
+        END {
+            if (section_found) {
+                if (in_section && !key_written) {
+                    print key " = " value
+                }
+            } else {
+                print ""
+                print "[" section "]"
+                print key " = " value
+            }
+        }
+    ' "$CONFIG_FILE" > "$tmp_file"
+
+    mv "$tmp_file" "$CONFIG_FILE"
+}
+
+echo "[INFO] Preparing ZeroClaw ingress configuration..."
+touch "$CONFIG_FILE"
+upsert_toml_key "gateway" "path_prefix" "\"${ZEROCLAW_PATH_PREFIX}\""
+
+if [ ! -f "$INGRESS_TOKEN_FILE" ]; then
+    tr -dc 'a-f0-9' < /dev/urandom | head -c 64 > "$INGRESS_TOKEN_FILE"
+    chmod 600 "$INGRESS_TOKEN_FILE"
+fi
+
+ZEROCLAW_INGRESS_TOKEN=$(cat "$INGRESS_TOKEN_FILE")
+ZEROCLAW_INGRESS_TOKEN_HASH=$(printf '%s' "$ZEROCLAW_INGRESS_TOKEN" | sha256sum | awk '{print $1}')
+
+EXISTING_PAIRED_TOKENS_LINE=$(awk '
+    /^\[gateway\]$/ { in_gateway = 1; next }
+    /^\[.*\]$/ { in_gateway = 0 }
+    in_gateway && /^paired_tokens[[:space:]]*=/ { print; exit }
+' "$CONFIG_FILE")
+
+if printf '%s\n' "$EXISTING_PAIRED_TOKENS_LINE" | grep -q "$ZEROCLAW_INGRESS_TOKEN_HASH"; then
+    echo "[INFO] Reusing existing ingress dashboard token."
+else
+    if [ -n "$EXISTING_PAIRED_TOKENS_LINE" ]; then
+        UPDATED_PAIRED_TOKENS_LINE="${EXISTING_PAIRED_TOKENS_LINE%]}"
+        if [ "$UPDATED_PAIRED_TOKENS_LINE" = 'paired_tokens = [' ]; then
+            UPDATED_PAIRED_TOKENS_LINE="paired_tokens = [\"${ZEROCLAW_INGRESS_TOKEN_HASH}\"]"
+        else
+            UPDATED_PAIRED_TOKENS_LINE="${UPDATED_PAIRED_TOKENS_LINE}, \"${ZEROCLAW_INGRESS_TOKEN_HASH}\"]"
+        fi
+    else
+        UPDATED_PAIRED_TOKENS_LINE="paired_tokens = [\"${ZEROCLAW_INGRESS_TOKEN_HASH}\"]"
+    fi
+    upsert_toml_key "gateway" "paired_tokens" "${UPDATED_PAIRED_TOKENS_LINE#paired_tokens = }"
+    echo "[INFO] Registered persistent ingress dashboard token."
+fi
 
 # ── 2. Environment Setup ──
 # Setup .bashrc for the terminal
@@ -43,6 +136,8 @@ echo "[INFO] Generating Nginx configuration..."
 sed -e "s|%%INGRESS_PORT%%|${INGRESS_PORT}|g" \
     -e "s|%%TTYD_PORT%%|${TTYD_PORT}|g" \
     -e "s|%%ZEROCLAW_PORT%%|${ZEROCLAW_PORT}|g" \
+    -e "s|%%ZEROCLAW_PATH_PREFIX%%|${ZEROCLAW_PATH_PREFIX}|g" \
+    -e "s|%%ZEROCLAW_INGRESS_TOKEN%%|${ZEROCLAW_INGRESS_TOKEN}|g" \
     /nginx.conf.tpl > /etc/nginx/nginx.conf
 
 # ── 4. Start Services ──
